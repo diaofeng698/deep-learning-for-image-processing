@@ -24,6 +24,8 @@ def main():
     model = MyModel()
 
     # define loss
+    # 独热编码  CategoricalCrossentropy
+    # 非独热编码 SparseCategoricalCrossentropy
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
     # define optimizer
     optimizer = tf.keras.optimizers.Adam()

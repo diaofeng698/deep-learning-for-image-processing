@@ -11,12 +11,15 @@ from model import resnet50
 
 
 def main():
-    data_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))  # get data root path
-    image_path = os.path.join(data_root, "data_set", "flower_data")  # flower data set path
+    data_root = os.path.abspath(os.path.join(
+        os.getcwd(), "/home/fdiao/cnn_df"))  # get data root path
+    image_path = os.path.join(data_root,
+                              "flower_data")  # flower data set path
     train_dir = os.path.join(image_path, "train")
     validation_dir = os.path.join(image_path, "val")
     assert os.path.exists(train_dir), "cannot find {}".format(train_dir)
-    assert os.path.exists(validation_dir), "cannot find {}".format(validation_dir)
+    assert os.path.exists(
+        validation_dir), "cannot find {}".format(validation_dir)
 
     im_height = 224
     im_width = 224
@@ -39,12 +42,14 @@ def main():
     train_image_generator = ImageDataGenerator(horizontal_flip=True,
                                                preprocessing_function=pre_function)
 
-    validation_image_generator = ImageDataGenerator(preprocessing_function=pre_function)
+    validation_image_generator = ImageDataGenerator(
+        preprocessing_function=pre_function)
 
     train_data_gen = train_image_generator.flow_from_directory(directory=train_dir,
                                                                batch_size=batch_size,
                                                                shuffle=True,
-                                                               target_size=(im_height, im_width),
+                                                               target_size=(
+                                                                   im_height, im_width),
                                                                class_mode='categorical')
     total_train = train_data_gen.n
 
@@ -61,7 +66,8 @@ def main():
     val_data_gen = validation_image_generator.flow_from_directory(directory=validation_dir,
                                                                   batch_size=batch_size,
                                                                   shuffle=False,
-                                                                  target_size=(im_height, im_width),
+                                                                  target_size=(
+                                                                      im_height, im_width),
                                                                   class_mode='categorical')
     # img, _ = next(train_data_gen)
     total_val = val_data_gen.n
@@ -74,15 +80,20 @@ def main():
     # 直接下载我转好的权重
     # download weights 链接: https://pan.baidu.com/s/1tLe9ahTMIwQAX7do_S59Zg  密码: u199
     pre_weights_path = './pretrain_weights.ckpt'
-    assert len(glob.glob(pre_weights_path+"*")), "cannot find {}".format(pre_weights_path)
+    assert len(glob.glob(pre_weights_path+"*")
+               ), "cannot find {}".format(pre_weights_path)
     feature.load_weights(pre_weights_path)
+
+    # 锁定参数
     feature.trainable = False
     feature.summary()
 
+    # 添加全连接层只训练最后全连接层
     model = tf.keras.Sequential([feature,
                                  tf.keras.layers.GlobalAvgPool2D(),
                                  tf.keras.layers.Dropout(rate=0.5),
-                                 tf.keras.layers.Dense(1024, activation="relu"),
+                                 tf.keras.layers.Dense(
+                                     1024, activation="relu"),
                                  tf.keras.layers.Dropout(rate=0.5),
                                  tf.keras.layers.Dense(num_classes),
                                  tf.keras.layers.Softmax()])
@@ -94,7 +105,8 @@ def main():
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.0002)
 
     train_loss = tf.keras.metrics.Mean(name='train_loss')
-    train_accuracy = tf.keras.metrics.CategoricalAccuracy(name='train_accuracy')
+    train_accuracy = tf.keras.metrics.CategoricalAccuracy(
+        name='train_accuracy')
 
     val_loss = tf.keras.metrics.Mean(name='val_loss')
     val_accuracy = tf.keras.metrics.CategoricalAccuracy(name='val_accuracy')
@@ -152,7 +164,8 @@ def main():
         # only save best weights
         if val_accuracy.result() > best_val_acc:
             best_val_acc = val_accuracy.result()
-            model.save_weights("./save_weights/resNet_50.ckpt", save_format="tf")
+            model.save_weights(
+                "./save_weights/resNet_50.ckpt", save_format="tf")
 
 
 if __name__ == '__main__':

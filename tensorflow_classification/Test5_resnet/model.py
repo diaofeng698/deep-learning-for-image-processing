@@ -1,4 +1,5 @@
 from tensorflow.keras import layers, Model, Sequential
+import tensorflow as tf
 
 
 class BasicBlock(layers.Layer):
@@ -47,15 +48,20 @@ class Bottleneck(layers.Layer):
 
     def __init__(self, out_channel, strides=1, downsample=None, **kwargs):
         super(Bottleneck, self).__init__(**kwargs)
-        self.conv1 = layers.Conv2D(out_channel, kernel_size=1, use_bias=False, name="conv1")
-        self.bn1 = layers.BatchNormalization(momentum=0.9, epsilon=1e-5, name="conv1/BatchNorm")
+        self.conv1 = layers.Conv2D(
+            out_channel, kernel_size=1, use_bias=False, name="conv1")
+        self.bn1 = layers.BatchNormalization(
+            momentum=0.9, epsilon=1e-5, name="conv1/BatchNorm")
         # -----------------------------------------
         self.conv2 = layers.Conv2D(out_channel, kernel_size=3, use_bias=False,
                                    strides=strides, padding="SAME", name="conv2")
-        self.bn2 = layers.BatchNormalization(momentum=0.9, epsilon=1e-5, name="conv2/BatchNorm")
+        self.bn2 = layers.BatchNormalization(
+            momentum=0.9, epsilon=1e-5, name="conv2/BatchNorm")
         # -----------------------------------------
-        self.conv3 = layers.Conv2D(out_channel * self.expansion, kernel_size=1, use_bias=False, name="conv3")
-        self.bn3 = layers.BatchNormalization(momentum=0.9, epsilon=1e-5, name="conv3/BatchNorm")
+        self.conv3 = layers.Conv2D(
+            out_channel * self.expansion, kernel_size=1, use_bias=False, name="conv3")
+        self.bn3 = layers.BatchNormalization(
+            momentum=0.9, epsilon=1e-5, name="conv3/BatchNorm")
         # -----------------------------------------
         self.relu = layers.ReLU()
         self.downsample = downsample
@@ -89,11 +95,13 @@ def _make_layer(block, in_channel, channel, block_num, name, strides=1):
         downsample = Sequential([
             layers.Conv2D(channel * block.expansion, kernel_size=1, strides=strides,
                           use_bias=False, name="conv1"),
-            layers.BatchNormalization(momentum=0.9, epsilon=1.001e-5, name="BatchNorm")
+            layers.BatchNormalization(
+                momentum=0.9, epsilon=1.001e-5, name="BatchNorm")
         ], name="shortcut")
 
     layers_list = []
-    layers_list.append(block(channel, downsample=downsample, strides=strides, name="unit_1"))
+    layers_list.append(block(channel, downsample=downsample,
+                       strides=strides, name="unit_1"))
 
     for index in range(1, block_num):
         layers_list.append(block(channel, name="unit_" + str(index + 1)))
@@ -107,14 +115,18 @@ def _resnet(block, blocks_num, im_width=224, im_height=224, num_classes=1000, in
     input_image = layers.Input(shape=(im_height, im_width, 3), dtype="float32")
     x = layers.Conv2D(filters=64, kernel_size=7, strides=2,
                       padding="SAME", use_bias=False, name="conv1")(input_image)
-    x = layers.BatchNormalization(momentum=0.9, epsilon=1e-5, name="conv1/BatchNorm")(x)
+    x = layers.BatchNormalization(
+        momentum=0.9, epsilon=1e-5, name="conv1/BatchNorm")(x)
     x = layers.ReLU()(x)
     x = layers.MaxPool2D(pool_size=3, strides=2, padding="SAME")(x)
 
     x = _make_layer(block, x.shape[-1], 64, blocks_num[0], name="block1")(x)
-    x = _make_layer(block, x.shape[-1], 128, blocks_num[1], strides=2, name="block2")(x)
-    x = _make_layer(block, x.shape[-1], 256, blocks_num[2], strides=2, name="block3")(x)
-    x = _make_layer(block, x.shape[-1], 512, blocks_num[3], strides=2, name="block4")(x)
+    x = _make_layer(block, x.shape[-1], 128,
+                    blocks_num[1], strides=2, name="block2")(x)
+    x = _make_layer(block, x.shape[-1], 256,
+                    blocks_num[2], strides=2, name="block3")(x)
+    x = _make_layer(block, x.shape[-1], 512,
+                    blocks_num[3], strides=2, name="block4")(x)
 
     if include_top:
         x = layers.GlobalAvgPool2D()(x)  # pool + flatten
@@ -139,3 +151,9 @@ def resnet50(im_width=224, im_height=224, num_classes=1000, include_top=True):
 def resnet101(im_width=224, im_height=224, num_classes=1000, include_top=True):
     return _resnet(Bottleneck, [3, 4, 23, 3], im_width, im_height, num_classes, include_top)
 
+
+if __name__ == '__main__':
+    feature = resnet101(num_classes=5, include_top=False)
+    feature.summary()
+    tf.keras.utils.plot_model(feature, to_file='resnet101.png', show_shapes=True,
+                              show_dtype=True, show_layer_names=True, rankdir='TB', expand_nested=True, dpi=96)

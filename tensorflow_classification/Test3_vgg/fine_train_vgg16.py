@@ -8,12 +8,14 @@ import glob
 
 
 def main():
-    data_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))  # get data root path
-    image_path = os.path.join(data_root, "data_set", "flower_data")  # flower data set path
+    data_root = os.path.abspath(os.path.join(
+        os.getcwd(), "/home/fdiao/cnn_df"))  # get data root path
+    image_path = os.path.join(data_root, "flower_data")  # flower data set path
     train_dir = os.path.join(image_path, "train")
     validation_dir = os.path.join(image_path, "val")
     assert os.path.exists(train_dir), "cannot find {}".format(train_dir)
-    assert os.path.exists(validation_dir), "cannot find {}".format(validation_dir)
+    assert os.path.exists(
+        validation_dir), "cannot find {}".format(validation_dir)
 
     # create direction for saving weights
     if not os.path.exists("save_weights"):
@@ -38,12 +40,14 @@ def main():
     # data generator with data augmentation
     train_image_generator = ImageDataGenerator(horizontal_flip=True,
                                                preprocessing_function=pre_function)
-    validation_image_generator = ImageDataGenerator(preprocessing_function=pre_function)
+    validation_image_generator = ImageDataGenerator(
+        preprocessing_function=pre_function)
 
     train_data_gen = train_image_generator.flow_from_directory(directory=train_dir,
                                                                batch_size=batch_size,
                                                                shuffle=True,
-                                                               target_size=(im_height, im_width),
+                                                               target_size=(
+                                                                   im_height, im_width),
                                                                class_mode='categorical')
     total_train = train_data_gen.n
 
@@ -60,7 +64,8 @@ def main():
     val_data_gen = validation_image_generator.flow_from_directory(directory=validation_dir,
                                                                   batch_size=batch_size,
                                                                   shuffle=False,
-                                                                  target_size=(im_height, im_width),
+                                                                  target_size=(
+                                                                      im_height, im_width),
                                                                   class_mode='categorical')
     total_val = val_data_gen.n
     print("using {} images for training, {} images for validation.".format(total_train,
@@ -68,8 +73,9 @@ def main():
 
     model = vgg("vgg16", 224, 224, 5)
 
-    pre_weights_path = './pretrain_weights.ckpt'
-    assert len(glob.glob(pre_weights_path+"*")), "cannot find {}".format(pre_weights_path)
+    pre_weights_path = '/home/fdiao/cnn_df/deep-learning-for-image-processing/tensorflow_classification/Test3_vgg/pretrain_weights.ckpt'
+    assert len(glob.glob(pre_weights_path+"*")
+               ), "cannot find {}".format(pre_weights_path)
     model.load_weights(pre_weights_path)
     for layer_t in model.layers:
         if layer_t.name == 'feature':
@@ -80,7 +86,8 @@ def main():
 
     # using keras high level api for training
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
-                  loss=tf.keras.losses.CategoricalCrossentropy(from_logits=False),
+                  loss=tf.keras.losses.CategoricalCrossentropy(
+                      from_logits=False),
                   metrics=["accuracy"])
 
     callbacks = [tf.keras.callbacks.ModelCheckpoint(filepath='./save_weights/myAlex_{epoch}.h5',

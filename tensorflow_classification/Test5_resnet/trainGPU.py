@@ -20,12 +20,14 @@ def main():
             print(e)
             exit(-1)
 
-    data_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))  # get data root path
-    image_path = os.path.join(data_root, "data_set", "flower_data")  # flower data set path
+    data_root = os.path.abspath(os.path.join(
+        os.getcwd(), "/home/fdiao/cnn_df"))  # get data root path
+    image_path = os.path.join(data_root, "flower_data")  # flower data set path
     train_dir = os.path.join(image_path, "train")
     validation_dir = os.path.join(image_path, "val")
     assert os.path.exists(train_dir), "cannot find {}".format(train_dir)
-    assert os.path.exists(validation_dir), "cannot find {}".format(validation_dir)
+    assert os.path.exists(
+        validation_dir), "cannot find {}".format(validation_dir)
 
     # create direction for saving weights
     if not os.path.exists("save_weights"):
@@ -42,7 +44,8 @@ def main():
     epochs = 30
 
     # class dict
-    data_class = [cla for cla in os.listdir(train_dir) if os.path.isdir(os.path.join(train_dir, cla))]
+    data_class = [cla for cla in os.listdir(
+        train_dir) if os.path.isdir(os.path.join(train_dir, cla))]
     class_num = len(data_class)
     class_dict = dict((value, index) for index, value in enumerate(data_class))
 
@@ -59,14 +62,17 @@ def main():
     random.shuffle(train_image_list)
     train_num = len(train_image_list)
     assert train_num > 0, "cannot find any .jpg file in {}".format(train_dir)
-    train_label_list = [class_dict[path.split(os.path.sep)[-2]] for path in train_image_list]
+    train_label_list = [class_dict[path.split(
+        os.path.sep)[-2]] for path in train_image_list]
 
     # load validation images list
     val_image_list = glob.glob(validation_dir+"/*/*.jpg")
     random.shuffle(val_image_list)
     val_num = len(val_image_list)
-    assert val_num > 0, "cannot find any .jpg file in {}".format(validation_dir)
-    val_label_list = [class_dict[path.split(os.path.sep)[-2]] for path in val_image_list]
+    assert val_num > 0, "cannot find any .jpg file in {}".format(
+        validation_dir)
+    val_label_list = [class_dict[path.split(
+        os.path.sep)[-2]] for path in val_image_list]
 
     print("using {} images for training, {} images for validation.".format(train_num,
                                                                            val_num))
@@ -97,27 +103,31 @@ def main():
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
     # load train dataset
-    train_dataset = tf.data.Dataset.from_tensor_slices((train_image_list, train_label_list))
+    train_dataset = tf.data.Dataset.from_tensor_slices(
+        (train_image_list, train_label_list))
     train_dataset = train_dataset.shuffle(buffer_size=train_num)\
                                  .map(process_train_img, num_parallel_calls=AUTOTUNE)\
                                  .repeat().batch(batch_size).prefetch(AUTOTUNE)
 
     # load train dataset
-    val_dataset = tf.data.Dataset.from_tensor_slices((val_image_list, val_label_list))
+    val_dataset = tf.data.Dataset.from_tensor_slices(
+        (val_image_list, val_label_list))
     val_dataset = val_dataset.map(process_val_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)\
                              .repeat().batch(batch_size)
 
     # 实例化模型
     feature = resnet50(num_classes=5, include_top=False)
     pre_weights_path = './pretrain_weights.ckpt'
-    assert len(glob.glob(pre_weights_path + "*")), "cannot find {}".format(pre_weights_path)
+    assert len(glob.glob(pre_weights_path + "*")
+               ), "cannot find {}".format(pre_weights_path)
     feature.load_weights(pre_weights_path)
     feature.trainable = False
 
     model = tf.keras.Sequential([feature,
                                  tf.keras.layers.GlobalAvgPool2D(),
                                  tf.keras.layers.Dropout(rate=0.5),
-                                 tf.keras.layers.Dense(1024, activation="relu"),
+                                 tf.keras.layers.Dense(
+                                     1024, activation="relu"),
                                  tf.keras.layers.Dropout(rate=0.5),
                                  tf.keras.layers.Dense(5),
                                  tf.keras.layers.Softmax()])
@@ -129,7 +139,8 @@ def main():
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.0005)
 
     train_loss = tf.keras.metrics.Mean(name='train_loss')
-    train_accuracy = tf.keras.metrics.CategoricalAccuracy(name='train_accuracy')
+    train_accuracy = tf.keras.metrics.CategoricalAccuracy(
+        name='train_accuracy')
 
     test_loss = tf.keras.metrics.Mean(name='test_loss')
     test_accuracy = tf.keras.metrics.CategoricalAccuracy(name='test_accuracy')
@@ -181,7 +192,8 @@ def main():
                               test_loss.result(),
                               test_accuracy.result() * 100))
         if test_loss.result() < best_test_loss:
-            model.save_weights("./save_weights/myResNet.ckpt", save_format='tf')
+            model.save_weights(
+                "./save_weights/myResNet.ckpt", save_format='tf')
 
 
 if __name__ == '__main__':

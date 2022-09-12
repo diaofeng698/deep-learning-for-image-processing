@@ -7,7 +7,7 @@ def rename_var(ckpt_path, new_ckpt_path, num_classes=5):
         new_var_list = []
 
         for var_name, shape in var_list:
-            # print(var_name)
+            print(var_name)
             if var_name in except_list:
                 continue
 
@@ -44,29 +44,44 @@ def rename_var(ckpt_path, new_ckpt_path, num_classes=5):
             re_var = tf.Variable(var, name=new_var_name)
             new_var_list.append(re_var)
 
-        re_var = tf.Variable(tf.keras.initializers.he_uniform()([25088, 2048]), name="dense/kernel")
+        re_var = tf.Variable(tf.keras.initializers.he_uniform()(
+            [25088, 2048]), name="dense/kernel")
         new_var_list.append(re_var)
-        re_var = tf.Variable(tf.keras.initializers.he_uniform()([2048]), name="dense/bias")
-        new_var_list.append(re_var)
-
-        re_var = tf.Variable(tf.keras.initializers.he_uniform()([2048, 2048]), name="dense_1/kernel")
-        new_var_list.append(re_var)
-        re_var = tf.Variable(tf.keras.initializers.he_uniform()([2048]), name="dense_1/bias")
+        re_var = tf.Variable(
+            tf.keras.initializers.he_uniform()([2048]), name="dense/bias")
         new_var_list.append(re_var)
 
-        re_var = tf.Variable(tf.keras.initializers.he_uniform()([2048, num_classes]), name="dense_2/kernel")
+        re_var = tf.Variable(tf.keras.initializers.he_uniform()(
+            [2048, 2048]), name="dense_1/kernel")
         new_var_list.append(re_var)
-        re_var = tf.Variable(tf.keras.initializers.he_uniform()([num_classes]), name="dense_2/bias")
+        re_var = tf.Variable(tf.keras.initializers.he_uniform()(
+            [2048]), name="dense_1/bias")
+        new_var_list.append(re_var)
+
+        re_var = tf.Variable(tf.keras.initializers.he_uniform()(
+            [2048, num_classes]), name="dense_2/kernel")
+        new_var_list.append(re_var)
+        re_var = tf.Variable(tf.keras.initializers.he_uniform()(
+            [num_classes]), name="dense_2/bias")
         new_var_list.append(re_var)
 
         saver = tf.compat.v1.train.Saver(new_var_list)
         sess.run(tf.compat.v1.global_variables_initializer())
-        saver.save(sess, save_path=new_ckpt_path, write_meta_graph=False, write_state=False)
+        saver.save(sess, save_path=new_ckpt_path,
+                   write_meta_graph=False, write_state=False)
 
 
-except_list = ['global_step', 'vgg_16/mean_rgb', 'vgg_16/fc8/biases', 'vgg_16/fc8/weights']
+except_list = ['global_step', 'vgg_16/mean_rgb',
+               'vgg_16/fc8/biases', 'vgg_16/fc8/weights']
 # http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz
-ckpt_path = './vgg_16.ckpt'
-new_ckpt_path = './pretrain_weights.ckpt'
+ckpt_path = '/home/fdiao/cnn_df/deep-learning-for-image-processing/tensorflow_classification/Test3_vgg/vgg_16.ckpt'
+new_ckpt_path = '/home/fdiao/cnn_df/deep-learning-for-image-processing/tensorflow_classification/Test3_vgg/pretrain_weights.ckpt'
 num_classes = 5
 rename_var(ckpt_path, new_ckpt_path, num_classes)
+
+print("*"*50)
+with tf.Graph().as_default(), tf.compat.v1.Session().as_default() as sess:
+    var_list = tf.train.list_variables(new_ckpt_path)
+
+    for var_name, shape in var_list:
+        print(var_name)

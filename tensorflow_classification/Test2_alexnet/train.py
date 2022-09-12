@@ -7,12 +7,14 @@ import os
 
 
 def main():
-    data_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))  # get data root path
-    image_path = os.path.join(data_root, "data_set", "flower_data")  # flower data set path
+    data_root = os.path.abspath(os.path.join(
+        os.getcwd(), "/home/fdiao/cnn_df"))  # get data root path
+    image_path = os.path.join(data_root, "flower_data")  # flower data set path
     train_dir = os.path.join(image_path, "train")
     validation_dir = os.path.join(image_path, "val")
     assert os.path.exists(train_dir), "cannot find {}".format(train_dir)
-    assert os.path.exists(validation_dir), "cannot find {}".format(validation_dir)
+    assert os.path.exists(
+        validation_dir), "cannot find {}".format(validation_dir)
 
     # create direction for saving weights
     if not os.path.exists("save_weights"):
@@ -24,14 +26,17 @@ def main():
     epochs = 10
 
     # data generator with data augmentation
+    # 数据增强(CPU做)
     train_image_generator = ImageDataGenerator(rescale=1. / 255,
                                                horizontal_flip=True)
     validation_image_generator = ImageDataGenerator(rescale=1. / 255)
 
+    # 独热编码
     train_data_gen = train_image_generator.flow_from_directory(directory=train_dir,
                                                                batch_size=batch_size,
                                                                shuffle=True,
-                                                               target_size=(im_height, im_width),
+                                                               target_size=(
+                                                                   im_height, im_width),
                                                                class_mode='categorical')
     total_train = train_data_gen.n
 
@@ -48,7 +53,8 @@ def main():
     val_data_gen = validation_image_generator.flow_from_directory(directory=validation_dir,
                                                                   batch_size=batch_size,
                                                                   shuffle=False,
-                                                                  target_size=(im_height, im_width),
+                                                                  target_size=(
+                                                                      im_height, im_width),
                                                                   class_mode='categorical')
     total_val = val_data_gen.n
     print("using {} images for training, {} images for validation.".format(total_train,
@@ -71,13 +77,16 @@ def main():
     # plotImages(sample_training_images[:5])
 
     model = AlexNet_v1(im_height=im_height, im_width=im_width, num_classes=5)
-    # model = AlexNet_v2(class_num=5)
+    # model = AlexNet_v2(num_classes=5)
     # model.build((batch_size, 224, 224, 3))  # when using subclass model
     model.summary()
 
     # using keras high level api for training
+    # Softmax:from_logits=False
+    # Non-softmax:from_logits=True
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005),
-                  loss=tf.keras.losses.CategoricalCrossentropy(from_logits=False),
+                  loss=tf.keras.losses.CategoricalCrossentropy(
+                      from_logits=False),
                   metrics=["accuracy"])
 
     callbacks = [tf.keras.callbacks.ModelCheckpoint(filepath='./save_weights/myAlex.h5',
@@ -138,7 +147,7 @@ def main():
     # @tf.function
     # def train_step(images, labels):
     #     with tf.GradientTape() as tape:
-    #         predictions = model(images, training=True)
+    #         predictions = model(images, training=True)   #对于dropout训练的时候 需要保留
     #         loss = loss_object(labels, predictions)
     #     gradients = tape.gradient(loss, model.trainable_variables)
     #     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -149,7 +158,7 @@ def main():
     #
     # @tf.function
     # def test_step(images, labels):
-    #     predictions = model(images, training=False)
+    #     predictions = model(images, training=False)   #对于dropout预测的时候 不需要保留
     #     t_loss = loss_object(labels, predictions)
     #
     #     test_loss(t_loss)

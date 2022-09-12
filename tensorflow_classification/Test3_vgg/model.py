@@ -1,4 +1,5 @@
 from tensorflow.keras import layers, Model, Sequential
+import tensorflow as tf
 
 CONV_KERNEL_INITIALIZER = {
     'class_name': 'VarianceScaling',
@@ -60,5 +61,13 @@ cfgs = {
 def vgg(model_name="vgg16", im_height=224, im_width=224, num_classes=1000):
     assert model_name in cfgs.keys(), "not support model {}".format(model_name)
     cfg = cfgs[model_name]
-    model = VGG(make_feature(cfg), im_height=im_height, im_width=im_width, num_classes=num_classes)
+    model = VGG(make_feature(cfg), im_height=im_height,
+                im_width=im_width, num_classes=num_classes)
     return model
+
+
+if __name__ == '__main__':
+    model = vgg("vgg16", 224, 224, num_classes=5)
+    model.summary()
+    tf.keras.utils.plot_model(model, to_file='vgg16.png', show_shapes=True,
+                              show_dtype=True, show_layer_names=True, rankdir='TB', expand_nested=True, dpi=96)

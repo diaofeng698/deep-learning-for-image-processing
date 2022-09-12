@@ -1,19 +1,24 @@
 from tensorflow.keras import layers, models, Model, Sequential
+import tensorflow as tf
 
 
 def GoogLeNet(im_height=224, im_width=224, class_num=1000, aux_logits=False):
     # tensorflow中的tensor通道排序是NHWC
     input_image = layers.Input(shape=(im_height, im_width, 3), dtype="float32")
     # (None, 224, 224, 3)
-    x = layers.Conv2D(64, kernel_size=7, strides=2, padding="SAME", activation="relu", name="conv2d_1")(input_image)
+    x = layers.Conv2D(64, kernel_size=7, strides=2, padding="SAME",
+                      activation="relu", name="conv2d_1")(input_image)
     # (None, 112, 112, 64)
-    x = layers.MaxPool2D(pool_size=3, strides=2, padding="SAME", name="maxpool_1")(x)
+    x = layers.MaxPool2D(pool_size=3, strides=2,
+                         padding="SAME", name="maxpool_1")(x)
     # (None, 56, 56, 64)
     x = layers.Conv2D(64, kernel_size=1, activation="relu", name="conv2d_2")(x)
     # (None, 56, 56, 64)
-    x = layers.Conv2D(192, kernel_size=3, padding="SAME", activation="relu", name="conv2d_3")(x)
+    x = layers.Conv2D(192, kernel_size=3, padding="SAME",
+                      activation="relu", name="conv2d_3")(x)
     # (None, 56, 56, 192)
-    x = layers.MaxPool2D(pool_size=3, strides=2, padding="SAME", name="maxpool_2")(x)
+    x = layers.MaxPool2D(pool_size=3, strides=2,
+                         padding="SAME", name="maxpool_2")(x)
 
     # (None, 28, 28, 192)
     x = Inception(64, 96, 128, 16, 32, 32, name="inception_3a")(x)
@@ -21,7 +26,8 @@ def GoogLeNet(im_height=224, im_width=224, class_num=1000, aux_logits=False):
     x = Inception(128, 128, 192, 32, 96, 64, name="inception_3b")(x)
 
     # (None, 28, 28, 480)
-    x = layers.MaxPool2D(pool_size=3, strides=2, padding="SAME", name="maxpool_3")(x)
+    x = layers.MaxPool2D(pool_size=3, strides=2,
+                         padding="SAME", name="maxpool_3")(x)
     # (None, 14, 14, 480)
     x = Inception(192, 96, 208, 16, 48, 64, name="inception_4a")(x)
     if aux_logits:
@@ -39,7 +45,8 @@ def GoogLeNet(im_height=224, im_width=224, class_num=1000, aux_logits=False):
     # (None, 14, 14, 528)
     x = Inception(256, 160, 320, 32, 128, 128, name="inception_4e")(x)
     # (None, 14, 14, 532)
-    x = layers.MaxPool2D(pool_size=3, strides=2, padding="SAME", name="maxpool_4")(x)
+    x = layers.MaxPool2D(pool_size=3, strides=2,
+                         padding="SAME", name="maxpool_4")(x)
 
     # (None, 7, 7, 832)
     x = Inception(256, 160, 320, 32, 128, 128, name="inception_5a")(x)
@@ -77,7 +84,8 @@ class Inception(layers.Layer):
             layers.Conv2D(ch5x5, kernel_size=5, padding="SAME", activation="relu")])      # output_size= input_size
 
         self.branch4 = Sequential([
-            layers.MaxPool2D(pool_size=3, strides=1, padding="SAME"),  # caution: default strides==pool_size
+            # caution: default strides==pool_size
+            layers.MaxPool2D(pool_size=3, strides=1, padding="SAME"),
             layers.Conv2D(pool_proj, kernel_size=1, activation="relu")])                  # output_size= input_size
 
     def call(self, inputs, **kwargs):
@@ -89,6 +97,7 @@ class Inception(layers.Layer):
         return outputs
 
 
+# 辅助分类器
 class InceptionAux(layers.Layer):
     def __init__(self, num_classes, **kwargs):
         super(InceptionAux, self).__init__(**kwargs)
@@ -118,3 +127,9 @@ class InceptionAux(layers.Layer):
         return x
 
 
+if __name__ == '__main__':
+    model = GoogLeNet(im_height=224, im_width=224,
+                      class_num=5, aux_logits=True)
+    model.summary()
+    tf.keras.utils.plot_model(model, to_file='googlenet.png', show_shapes=True,
+                              show_dtype=True, show_layer_names=True, rankdir='TB', expand_nested=True, dpi=96)

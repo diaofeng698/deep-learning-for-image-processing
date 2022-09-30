@@ -1,4 +1,7 @@
 from tensorflow.keras import layers, Model, Sequential
+import tensorflow as tf
+from tensorflow.keras.applications import MobileNet
+# 保证卷积核个数为divisor的倍数
 
 
 def _make_divisible(ch, divisor=8, min_ch=None):
@@ -22,7 +25,8 @@ class ConvBNReLU(layers.Layer):
         super(ConvBNReLU, self).__init__(**kwargs)
         self.conv = layers.Conv2D(filters=out_channel, kernel_size=kernel_size,
                                   strides=stride, padding='SAME', use_bias=False, name='Conv2d')
-        self.bn = layers.BatchNormalization(momentum=0.9, epsilon=1e-5, name='BatchNorm')
+        self.bn = layers.BatchNormalization(
+            momentum=0.9, epsilon=1e-5, name='BatchNorm')
         self.activation = layers.ReLU(max_value=6.0)
 
     def call(self, inputs, training=False):
@@ -30,6 +34,8 @@ class ConvBNReLU(layers.Layer):
         x = self.bn(x, training=training)
         x = self.activation(x)
         return x
+
+# 倒残差
 
 
 class InvertedResidual(layers.Layer):
@@ -41,18 +47,21 @@ class InvertedResidual(layers.Layer):
         layer_list = []
         if expand_ratio != 1:
             # 1x1 pointwise conv
-            layer_list.append(ConvBNReLU(out_channel=self.hidden_channel, kernel_size=1, name='expand'))
+            layer_list.append(ConvBNReLU(
+                out_channel=self.hidden_channel, kernel_size=1, name='expand'))
 
         layer_list.extend([
             # 3x3 depthwise conv
             layers.DepthwiseConv2D(kernel_size=3, padding='SAME', strides=stride,
                                    use_bias=False, name='depthwise'),
-            layers.BatchNormalization(momentum=0.9, epsilon=1e-5, name='depthwise/BatchNorm'),
+            layers.BatchNormalization(
+                momentum=0.9, epsilon=1e-5, name='depthwise/BatchNorm'),
             layers.ReLU(max_value=6.0),
             # 1x1 pointwise conv(linear)
             layers.Conv2D(filters=out_channel, kernel_size=1, strides=1,
                           padding='SAME', use_bias=False, name='project'),
-            layers.BatchNormalization(momentum=0.9, epsilon=1e-5, name='project/BatchNorm')
+            layers.BatchNormalization(
+                momentum=0.9, epsilon=1e-5, name='project/BatchNorm')
         ])
         self.main_branch = Sequential(layer_list, name='expanded_conv')
 
@@ -61,6 +70,8 @@ class InvertedResidual(layers.Layer):
             return inputs + self.main_branch(inputs, training=training)
         else:
             return self.main_branch(inputs, training=training)
+
+# round_nearest卷积核的个数为8的倍数
 
 
 def MobileNetV2(im_height=224,
@@ -108,3 +119,13 @@ def MobileNetV2(im_height=224,
 
     model = Model(inputs=input_image, outputs=output)
     return model
+
+
+if __name__ == '__main__':
+    model = MobileNetV2(num_classes=5)
+    model.summary()
+
+    # 绘制模型
+    # sudo apt-get install graphviz
+    tf.keras.utils.plot_model(model, to_file='mobilenet_v2.png', show_shapes=True,
+                              show_dtype=True, show_layer_names=True, rankdir='TB', expand_nested=True, dpi=96)

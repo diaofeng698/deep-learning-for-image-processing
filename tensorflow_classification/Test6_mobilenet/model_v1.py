@@ -5,7 +5,7 @@ import tensorflow as tf
 
 from tensorflow.keras.layers import Input, DepthwiseConv2D
 from tensorflow.keras.layers import Conv2D, BatchNormalization
-from tensorflow.keras.layers import ReLU, AvgPool2D, Flatten, Dense
+from tensorflow.keras.layers import ReLU, AvgPool2D, Flatten, Dense, Softmax,Dropout
 
 from tensorflow.keras import Model
 
@@ -55,7 +55,9 @@ def MobileNetV1(im_height=224,
     if include_top is True:
 
         x = AvgPool2D(pool_size=7, strides=1, data_format='channels_first')(x)
-        output = Dense(units=num_classes, activation='softmax')(x)
+        x = Dropout(0.2)(x)
+        x = Dense(units=num_classes, name='Logits')(x)
+        output = Softmax()(x)
     else:
         output = x
 

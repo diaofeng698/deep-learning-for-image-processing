@@ -1,6 +1,7 @@
 from typing import Union
 from functools import partial
 from tensorflow.keras import layers, Model
+import tensorflow as tf
 
 
 def _make_divisible(ch, divisor=8, min_ch=None):
@@ -63,7 +64,8 @@ class HardSwish(layers.Layer):
 
 def _se_block(inputs, filters, prefix, se_ratio=1 / 4.):
     # [batch, height, width, channel] -> [batch, channel]
-    x = layers.GlobalAveragePooling2D(name=prefix + 'squeeze_excite/AvgPool')(inputs)
+    x = layers.GlobalAveragePooling2D(
+        name=prefix + 'squeeze_excite/AvgPool')(inputs)
 
     # Target shape. Tuple of integers, does not include the samples dimension (batch size).
     # [batch, channel] -> [batch, 1, 1, channel]
@@ -288,3 +290,19 @@ def mobilenet_v3_small(input_shape=(224, 224, 3),
     model = Model(img_input, x, name="MobilenetV3large")
 
     return model
+
+
+if __name__ == '__main__':
+    im_height = 224
+    im_width = 224
+    batch_size = 16
+    epochs = 20
+    num_classes = 5
+    model = mobilenet_v3_large(input_shape=(im_height, im_width, 3),
+                               num_classes=num_classes,
+                               include_top=True)
+
+    print(model.summary())
+
+    tf.keras.utils.plot_model(model, to_file='mobilenet_v3.png', show_shapes=True,
+                              show_dtype=True, show_layer_names=True, rankdir='TB', expand_nested=True, dpi=96)

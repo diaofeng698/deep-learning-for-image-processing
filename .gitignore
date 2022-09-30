@@ -16,7 +16,9 @@ flower_data
 *.bin
 *.mapping
 *.csv
+*.tgz
 checkpoint
 data
 VOCdevkit
 ssd_resnet50_v1_fpn_shared_box_predictor
+v3-large_224_1.0_float
